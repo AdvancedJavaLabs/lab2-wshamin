@@ -17,6 +17,11 @@ public class ResultMessage implements Serializable {
     private String replacedText;
     private List<String> sortedSentences;
 
+    private long processingTimeMillis;
+    private String corpusName;
+    private long corpusSizeBytes;
+    private int workerCount;
+
     public ResultMessage() {
     }
 
@@ -106,5 +111,37 @@ public class ResultMessage implements Serializable {
 
     public void setSortedSentences(List<String> sortedSentences) {
         this.sortedSentences = sortedSentences;
+    }
+
+    public long getProcessingTimeMillis() {
+        return processingTimeMillis;
+    }
+
+    public void setProcessingTimeMillis(long processingTimeMillis) {
+        this.processingTimeMillis = processingTimeMillis;
+    }
+
+    public String getCorpusName() {
+        return corpusName;
+    }
+
+    public void setCorpusName(String corpusName) {
+        this.corpusName = corpusName;
+    }
+
+    public long getCorpusSizeBytes() {
+        return corpusSizeBytes;
+    }
+
+    public void setCorpusSizeBytes(long corpusSizeBytes) {
+        this.corpusSizeBytes = corpusSizeBytes;
+    }
+
+    public int getWorkerCount() {
+        return workerCount;
+    }
+
+    public void setWorkerCount(int workerCount) {
+        this.workerCount = workerCount;
     }
 }

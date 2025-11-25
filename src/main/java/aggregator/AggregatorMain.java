@@ -28,9 +28,11 @@ public class AggregatorMain {
         channel.queueDeclare(RESULTS_QUEUE, true, false, false, null);
         channel.queueBind(RESULTS_QUEUE, RESULTS_EXCHANGE, "result");
 
+        int workerCount = args.length > 0 ? Integer.parseInt(args[0]) : -1;
+
         System.out.println("Аггрегатор запустился и ожидает результатов...");
 
-        ResultAggregator aggregator = new ResultAggregator();
+        ResultAggregator aggregator = new ResultAggregator(workerCount);
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), "UTF-8");
@@ -41,9 +43,8 @@ public class AggregatorMain {
 
                 if ("END".equals(type)) {
                     ControlMessage end = JsonUtils.fromJson(message, ControlMessage.class);
-                    aggregator.onEnd(end.jobId, end.totalSections);
-                    System.out.println("Получен END для jobId=" + end.jobId
-                            + ", totalSections=" + end.totalSections);
+                    aggregator.onEnd(end);
+                    System.out.println("Получен END для jobId=" + end.jobId + ", totalSections=" + end.totalSections);
                 } else {
                     ResultMessage result = JsonUtils.fromJson(message, ResultMessage.class);
                     aggregator.addResult(result);
@@ -65,6 +66,14 @@ public class AggregatorMain {
                     System.out.println("Пишу результат в: " + path.toAbsolutePath());
                     Files.write(path, json.getBytes());
                     System.out.println("Записан результат в " + filename);
+
+                    System.out.println("=== Метрики эксперимента ===");
+                    System.out.println("Корпус: " + finalResult.getCorpusName());
+                    System.out.println("Размер корпуса, байт: " + finalResult.getCorpusSizeBytes());
+                    System.out.println("Число воркеров: " + finalResult.getWorkerCount());
+                    System.out.println("TotalSections: " + finalResult.getTotalSections());
+                    System.out.println("Время обработки, мс: " + finalResult.getProcessingTimeMillis());
+                    System.out.println("============================");
 
                     aggregator.removeJob(jobId);
                 }

@@ -1,5 +1,6 @@
 package aggregator;
 
+import common.ControlMessage;
 import common.ResultMessage;
 
 import java.util.*;
@@ -8,6 +9,16 @@ import java.util.stream.Collectors;
 public class ResultAggregator {
     private final Map<String, JobData> jobs = new HashMap<>();
 
+    private final int workerCount;
+
+    public ResultAggregator(int workerCount) {
+        this.workerCount = workerCount;
+    }
+
+    public ResultAggregator() {
+        this(-1);
+    }
+
     private static class JobData {
         long totalWordCount = 0;
         Map<String, Integer> globalWordFreq = new HashMap<>();
@@ -15,51 +26,53 @@ public class ResultAggregator {
         long totalNeg = 0;
         long totalTokens = 0;
 
-        Map<Integer, String> replacedSections = new TreeMap<>();
         List<String> allSentences = new ArrayList<>();
 
         Set<Integer> receivedSectionIds = new HashSet<>();
 
         int expectedSections = -1;
         boolean endReceived = false;
+
+        String corpusPath;
+        long corpusSizeBytes;
+        long startTimeMillis;
+        long endTimeMillis;
     }
 
     public void addResult(ResultMessage result) {
         JobData job = jobs.computeIfAbsent(result.getJobId(), k -> new JobData());
-
         int sectionId = result.getSectionId();
-
         if (job.receivedSectionIds.contains(sectionId)) {
             return;
         }
 
         job.totalWordCount += result.getWordCount();
 
-        if (result.getWordFreq() != null) {
-            result.getWordFreq().forEach(
-                    (word, count) -> job.globalWordFreq.merge(word, count, Integer::sum));
+        if (result.getTopN() != null) {
+            result.getTopN().forEach(
+                    (word, count) -> job.globalWordFreq.merge(word, count, Integer::sum)
+            );
         }
 
         job.totalPos += result.getSentimentPos();
         job.totalNeg += result.getSentimentNeg();
         job.totalTokens += result.getWordCount();
 
-        if (result.getReplacedText() != null) {
-            job.replacedSections.put(sectionId, result.getReplacedText());
-        }
-
-        if (result.getSortedSentences() != null) {
-            job.allSentences.addAll(result.getSortedSentences());
-        }
-
         job.receivedSectionIds.add(sectionId);
     }
 
-    public void onEnd(String jobId, int totalSections) {
+    public void onEnd(ControlMessage end) {
+        String jobId = end.getJobId();
         JobData job = jobs.computeIfAbsent(jobId, k -> new JobData());
-        job.expectedSections = totalSections;
+
+        job.expectedSections = end.getTotalSections();
         job.endReceived = true;
-        System.out.println("Джоба " + jobId + " закончила работу, totalSections=: " + totalSections);
+
+        job.corpusPath = end.getCorpusPath();
+        job.corpusSizeBytes = end.getCorpusSizeBytes();
+        job.startTimeMillis = end.getStartTimeMillis();
+
+        System.out.println("Джоба " + jobId + " закончила работу, totalSections=: " + job.expectedSections);
     }
 
     public boolean isJobComplete(String jobId) {
@@ -78,6 +91,9 @@ public class ResultAggregator {
         JobData job = jobs.get(jobId);
         if (job == null)
             return null;
+
+        job.endTimeMillis = System.currentTimeMillis();
+        long duration = (job.startTimeMillis > 0) ? job.endTimeMillis - job.startTimeMillis : -1L;
 
         ResultMessage finalResult = new ResultMessage();
         finalResult.setJobId(jobId);
@@ -106,6 +122,12 @@ public class ResultAggregator {
 
         job.allSentences.sort(Comparator.comparingInt(String::length));
         finalResult.setSortedSentences(job.allSentences);
+
+        finalResult.setProcessingTimeMillis(duration);
+        finalResult.setCorpusName(job.corpusPath);
+        finalResult.setCorpusSizeBytes(job.corpusSizeBytes);
+        finalResult.setWorkerCount(workerCount);
+        finalResult.setTotalSections(job.expectedSections);
 
         return finalResult;
     }

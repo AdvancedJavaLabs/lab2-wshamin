@@ -1,5 +1,7 @@
 package worker;
 
+import java.nio.charset.StandardCharsets;
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -29,7 +31,7 @@ public class WorkerMain {
         TextProcessor processor = new TextProcessor();
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), "UTF-8");
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             System.out.println("Получен таск");
 
             try {
@@ -40,16 +42,16 @@ public class WorkerMain {
                 String resultJson = JsonUtils.toJson(result);
                 channel.basicPublish(RESULTS_EXCHANGE, "result",
                         MessageProperties.PERSISTENT_TEXT_PLAIN,
-                        resultJson.getBytes("UTF-8"));
+                        resultJson.getBytes(StandardCharsets.UTF_8));
 
                 System.out.println("Обрабатываем таск " + task.getSectionId());
                 channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
             } catch (Exception e) {
                 System.err.println("Ошибка при обработке таска: " + e.getMessage());
-                e.printStackTrace();
                 channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
             }
         };
+
         channel.basicConsume(TASKS_QUEUE, false, deliverCallback, consumerTag -> {
         });
     }

@@ -12,6 +12,7 @@ import common.TaskMessage;
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
@@ -24,6 +25,11 @@ public class ProducerMain {
 
     public static void main(String[] args) throws Exception {
         String corpusPath = args.length > 0 ? args[0] : "corpus.txt";
+
+        long startTimeMillis = System.currentTimeMillis();
+
+        Path corpusFile = Paths.get(corpusPath);
+        long corpusSizeBytes = Files.size(corpusFile);
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
@@ -44,7 +50,7 @@ public class ProducerMain {
 
             int sectionId = 0;
 
-            try (BufferedReader reader = Files.newBufferedReader(Paths.get(corpusPath))) {
+            try (BufferedReader reader = Files.newBufferedReader(corpusFile)) {
                 String line;
                 StringBuilder sectionBuilder = new StringBuilder();
 
@@ -70,7 +76,7 @@ public class ProducerMain {
                 }
             }
 
-            sendEnd(channel, jobId, sectionId);
+            sendEnd(channel, jobId, sectionId, corpusPath, corpusSizeBytes, startTimeMillis);
         }
     }
 
@@ -78,15 +84,28 @@ public class ProducerMain {
         TaskMessage task = new TaskMessage(jobId, sectionId, -1, text);
         String json = JsonUtils.toJson(task);
 
-        channel.basicPublish(TASKS_EXCHANGE, "task", MessageProperties.PERSISTENT_TEXT_PLAIN, json.getBytes("UTF-8"));
+        channel.basicPublish(TASKS_EXCHANGE, "task", MessageProperties.PERSISTENT_TEXT_PLAIN, json.getBytes(StandardCharsets.UTF_8));
 
         if (sectionId % 100 == 0) {
-            System.out.println("Sent task " + sectionId);
+            System.out.println("Отправлена задача " + sectionId);
         }
     }
 
-    private static void sendEnd(Channel channel, String jobId, int totalSections) throws Exception {
-        ControlMessage end = new ControlMessage(jobId, totalSections);
+    private static void sendEnd(Channel channel,
+                                String jobId,
+                                int totalSections,
+                                String corpusPath,
+                                long corpusSizeBytes,
+                                long startTimeMillis) throws Exception {
+
+        ControlMessage end = new ControlMessage(
+                jobId,
+                totalSections,
+                corpusPath,
+                corpusSizeBytes,
+                startTimeMillis
+        );
+
         String json = JsonUtils.toJson(end);
 
         channel.basicPublish(
@@ -96,6 +115,7 @@ public class ProducerMain {
                 json.getBytes(StandardCharsets.UTF_8)
         );
 
-        System.out.println("Sent END. Total sections = " + totalSections);
+        System.out.println("Отправляем завершающее сообщение END. Всего секций = " + totalSections);
     }
+
 }

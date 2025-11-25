@@ -40,7 +40,7 @@ public class TextProcessor {
 
         String text = task.getText();
 
-        // Подсчет количества слов и частоты
+        // Подсчет слов
         String[] tokens = text.toLowerCase().split("\\W+");
         Map<String, Integer> wordFreq = new HashMap<>();
         long wordCount = 0;
@@ -51,7 +51,6 @@ public class TextProcessor {
             }
         }
         result.setWordCount(wordCount);
-        result.setWordFreq(wordFreq);
 
         // top-N слов
         Map<String, Integer> topNWords = wordFreq.entrySet().stream()
@@ -67,27 +66,35 @@ public class TextProcessor {
         // Анализ тональности
         int pos = 0;
         int neg = 0;
+
         for (String token : tokens) {
-            if (positiveWords.contains(token))
+            if (positiveWords.contains(token)) {
                 pos++;
-            if (negativeWords.contains(token))
+            }
+            if (negativeWords.contains(token)) {
                 neg++;
+            }
         }
+
         result.setSentimentPos(pos);
         result.setSentimentNeg(neg);
         result.setSentimentScore(wordCount > 0 ? (double) (pos - neg) / wordCount : 0);
 
-        // Замена имен
-        Matcher matcher = Pattern.compile("\\b[A-Z][a-z]+\\b").matcher(text);
-        String replacedText = matcher.replaceAll(replacingName);
-        result.setReplacedText(replacedText);
+        // Замена имен. Коммент из-за ООМ на больших данных
+//        Matcher matcher = Pattern.compile("\\b[A-Z][a-z]+\\b").matcher(text);
+//        String replacedText = matcher.replaceAll(replacingName);
+//        result.setReplacedText(replacedText);
+        result.setReplacedText(null);
 
-        // Сортировка предложений
-        String[] sentences = text.split("(?<=[.!?])\\s+");
-        List<String> sortedSentences = Arrays.stream(sentences)
-                .sorted(Comparator.comparingInt(String::length))
-                .collect(Collectors.toList());
-        result.setSortedSentences(sortedSentences);
+        // Сортировка предложений. Коммент из-за ООМ
+//        String[] sentences = text.split("(?<=[.!?])\\s+");
+//        List<String> sortedSentences = Arrays.stream(sentences)
+//                .sorted(Comparator.comparingInt(String::length))
+//                .collect(Collectors.toList());
+//        result.setSortedSentences(sortedSentences);
+        result.setSortedSentences(null);
+
+        result.setWordFreq(null);
 
         return result;
     }
