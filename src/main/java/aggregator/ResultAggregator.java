@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 public class ResultAggregator {
     private final Map<String, JobData> jobs = new HashMap<>();
+    private static final int MAX_SENTENCES = 10000;
 
     private final int workerCount;
 
@@ -27,7 +28,7 @@ public class ResultAggregator {
         long totalTokens = 0;
 
         List<String> allSentences = new ArrayList<>();
-
+        StringBuilder replacedTextBuilder = new StringBuilder();
         Set<Integer> receivedSectionIds = new HashSet<>();
 
         int expectedSections = -1;
@@ -57,6 +58,20 @@ public class ResultAggregator {
         job.totalPos += result.getSentimentPos();
         job.totalNeg += result.getSentimentNeg();
         job.totalTokens += result.getWordCount();
+
+        if (result.getReplacedText() != null) {
+            job.replacedTextBuilder
+                    .append(result.getReplacedText())
+                    .append("\n\n");
+        }
+
+        if (result.getSortedSentences() != null) {
+            job.allSentences.addAll(result.getSortedSentences());
+
+            if (job.allSentences.size() > MAX_SENTENCES) {
+                job.allSentences = job.allSentences.subList(0, MAX_SENTENCES);
+            }
+        }
 
         job.receivedSectionIds.add(sectionId);
     }
@@ -118,7 +133,12 @@ public class ResultAggregator {
         finalResult.setSentimentPos((int) job.totalPos);
         finalResult.setSentimentNeg((int) job.totalNeg);
 
-        finalResult.setReplacedText(null);
+        finalResult.setReplacedText(
+                job.replacedTextBuilder.length() > 0
+                        ? job.replacedTextBuilder.toString()
+                        : null
+        );
+//        finalResult.setReplacedText(null);
 
         job.allSentences.sort(Comparator.comparingInt(String::length));
         finalResult.setSortedSentences(job.allSentences);

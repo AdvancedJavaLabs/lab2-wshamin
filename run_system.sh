@@ -1,10 +1,9 @@
 #!/bin/bash
-set -euo pipefail
 
 CP=$(cat classpath.txt)
 
-#CORPORA=("corpus2.txt" "corpus10.txt" "corpus25.txt" "corpus50.txt")
-CORPORA=("corpus.txt")
+CORPORA=("corpus.txt" "corpus10.txt" "corpus25.txt")
+#CORPORA=("corpus.txt")
 WORKERS=(2 4)
 
 WAIT_AFTER_PRODUCER=60
@@ -12,11 +11,6 @@ WAIT_AFTER_PRODUCER=60
 mkdir -p results
 
 for corpus in "${CORPORA[@]}"; do
-  if [ ! -f "$corpus" ]; then
-    echo "WARNING: file $corpus not found, skipping"
-    continue
-  fi
-
   for nworkers in "${WORKERS[@]}"; do
     echo "======================================"
     echo "Эксперимент: corpus=$corpus, workers=$nworkers"

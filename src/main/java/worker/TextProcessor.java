@@ -21,14 +21,14 @@ public class TextProcessor {
         this.positiveWords = loadWords("src/main/resources/positive.txt");
         this.negativeWords = loadWords("src/main/resources/negative.txt");
         this.topN = 10;
-        this.replacingName = "NAME";
+        this.replacingName = "ГАЛИНА";
     }
 
     private Set<String> loadWords(String path) {
         try {
             return new HashSet<>(Files.readAllLines(Paths.get(path)));
         } catch (IOException e) {
-            System.err.println("Warning: could not load words from " + path);
+            System.err.println("Не получилось загрузить словарь " + path);
             return new HashSet<>();
         }
     }
@@ -81,18 +81,18 @@ public class TextProcessor {
         result.setSentimentScore(wordCount > 0 ? (double) (pos - neg) / wordCount : 0);
 
         // Замена имен. Коммент из-за ООМ на больших данных
-//        Matcher matcher = Pattern.compile("\\b[A-Z][a-z]+\\b").matcher(text);
-//        String replacedText = matcher.replaceAll(replacingName);
-//        result.setReplacedText(replacedText);
-        result.setReplacedText(null);
+        Matcher matcher = Pattern.compile("\\b[A-Z][a-z]+\\b").matcher(text);
+        String replacedText = matcher.replaceAll(replacingName);
+        result.setReplacedText(replacedText);
+//        result.setReplacedText(null);
 
         // Сортировка предложений. Коммент из-за ООМ
-//        String[] sentences = text.split("(?<=[.!?])\\s+");
-//        List<String> sortedSentences = Arrays.stream(sentences)
-//                .sorted(Comparator.comparingInt(String::length))
-//                .collect(Collectors.toList());
-//        result.setSortedSentences(sortedSentences);
-        result.setSortedSentences(null);
+        String[] sentences = text.split("(?<=[.!?])\\s+");
+        List<String> sortedSentences = Arrays.stream(sentences)
+                .sorted(Comparator.comparingInt(String::length))
+                .collect(Collectors.toList());
+        result.setSortedSentences(sortedSentences);
+//        result.setSortedSentences(null);
 
         result.setWordFreq(null);
 
