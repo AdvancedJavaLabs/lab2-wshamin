@@ -20,15 +20,17 @@ public class WorkerMain {
         Channel channel = connection.createChannel();
 
         channel.queueDeclare(TASKS_QUEUE, true, false, false, null);
-        channel.basicQos(1); // Fair dispatch
+        channel.basicQos(1);
 
-        System.out.println("Worker started. Waiting for messages...");
+        channel.exchangeDeclare(RESULTS_EXCHANGE, "direct");
+
+        System.out.println("Воркер запустился и ожидает сообщения...");
 
         TextProcessor processor = new TextProcessor();
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), "UTF-8");
-            System.out.println("Received task");
+            System.out.println("Получен таск");
 
             try {
                 TaskMessage task = JsonUtils.fromJson(message, TaskMessage.class);
@@ -40,12 +42,11 @@ public class WorkerMain {
                         MessageProperties.PERSISTENT_TEXT_PLAIN,
                         resultJson.getBytes("UTF-8"));
 
-                System.out.println("Processed task " + task.getSectionId());
+                System.out.println("Обрабатываем таск " + task.getSectionId());
                 channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
             } catch (Exception e) {
-                System.err.println("Error processing task: " + e.getMessage());
+                System.err.println("Ошибка при обработке таска: " + e.getMessage());
                 e.printStackTrace();
-                // Optionally nack or reject
                 channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
             }
         };

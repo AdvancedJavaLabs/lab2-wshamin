@@ -17,3 +17,4 @@ sleep 2
 echo "Starting Producer..."
 java -cp $CP producer.ProducerMain corpus.txt
 echo "Producer finished"
+sleep 100

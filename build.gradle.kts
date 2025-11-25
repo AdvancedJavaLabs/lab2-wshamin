@@ -33,3 +33,12 @@ tasks.register("printClasspath") {
         println(sourceSets["main"].runtimeClasspath.asPath)
     }
 }
+
+tasks.register("writeClasspath") {
+    doLast {
+        val cp = sourceSets["main"].runtimeClasspath
+            .joinToString(System.getProperty("path.separator")) { it.absolutePath }
+        file("classpath.txt").writeText(cp)
+        println("Записан classpath.txt")
+    }
+}

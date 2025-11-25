@@ -20,7 +20,7 @@ public class ProducerMain {
     private final static String TASKS_QUEUE = "tasks_queue";
     private final static String RESULTS_EXCHANGE = "results_exchange";
     private final static String RESULTS_QUEUE = "results_queue";
-    private final static int MAX_SECTION_CHARS = 1_000_000;
+    private final static int MAX_SECTION_CHARS = 1000000;
 
     public static void main(String[] args) throws Exception {
         String corpusPath = args.length > 0 ? args[0] : "corpus.txt";
@@ -93,7 +93,8 @@ public class ProducerMain {
                 RESULTS_EXCHANGE,
                 "result",
                 MessageProperties.PERSISTENT_TEXT_PLAIN,
-                json.getBytes(StandardCharsets.UTF_8));
+                json.getBytes(StandardCharsets.UTF_8)
+        );
 
         System.out.println("Sent END. Total sections = " + totalSections);
     }

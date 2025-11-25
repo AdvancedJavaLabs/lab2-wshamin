@@ -59,7 +59,7 @@ public class ResultAggregator {
         JobData job = jobs.computeIfAbsent(jobId, k -> new JobData());
         job.expectedSections = totalSections;
         job.endReceived = true;
-        System.out.println("Job " + jobId + " expected sections set to: " + totalSections);
+        System.out.println("Джоба " + jobId + " закончила работу, totalSections=: " + totalSections);
     }
 
     public boolean isJobComplete(String jobId) {
@@ -102,11 +102,7 @@ public class ResultAggregator {
         finalResult.setSentimentPos((int) job.totalPos);
         finalResult.setSentimentNeg((int) job.totalNeg);
 
-        StringBuilder fullText = new StringBuilder();
-        for (String section : job.replacedSections.values()) {
-            fullText.append(section).append("\n\n");
-        }
-        finalResult.setReplacedText(fullText.toString().trim());
+        finalResult.setReplacedText(null);
 
         job.allSentences.sort(Comparator.comparingInt(String::length));
         finalResult.setSortedSentences(job.allSentences);
