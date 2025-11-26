@@ -81,7 +81,7 @@ public class TextProcessor {
         result.setSentimentScore(wordCount > 0 ? (double) (pos - neg) / wordCount : 0);
 
         // Замена имен. Коммент из-за ООМ на больших данных
-        Matcher matcher = Pattern.compile("\\b[A-Z][a-z]+\\b").matcher(text);
+        Matcher matcher = Pattern.compile("\\b([A-Z][a-z]+|[А-ЯЁ][а-яё]+)\\b").matcher(text);
         String replacedText = matcher.replaceAll(replacingName);
         result.setReplacedText(replacedText);
 //        result.setReplacedText(null);
