@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    implementation("javax.jms:jms-api:2.0.1")
-    implementation("org.apache.activemq:activemq-broker:6.1.1")
+    implementation("com.rabbitmq:amqp-client:5.27.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
     testImplementation(kotlin("test"))
 }
 
@@ -26,4 +26,19 @@ kotlin {
 
 application {
     mainClass.set("MainKt")
+}
+
+tasks.register("printClasspath") {
+    doLast {
+        println(sourceSets["main"].runtimeClasspath.asPath)
+    }
+}
+
+tasks.register("writeClasspath") {
+    doLast {
+        val cp = sourceSets["main"].runtimeClasspath
+            .joinToString(System.getProperty("path.separator")) { it.absolutePath }
+        file("classpath.txt").writeText(cp)
+        println("Записан classpath.txt")
+    }
 }
